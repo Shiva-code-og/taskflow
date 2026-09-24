@@ -3,7 +3,7 @@
 import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabaseClient';
-import { ClipboardList, AlertCircle, Chrome, Sparkles, CheckCircle2, Users } from 'lucide-react';
+import { ClipboardList, AlertCircle, Sparkles, CheckCircle2, Users } from 'lucide-react';
 
 function LoginContent() {
   const [loading, setLoading] = useState(false);
