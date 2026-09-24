@@ -1,9 +1,14 @@
 import nodemailer from 'nodemailer'
+import dns from 'dns'
+
+// Force Node.js to resolve DNS to IPv4 first (Render free tier doesn't support IPv6)
+dns.setDefaultResultOrder('ipv4first')
 
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 587,
-    secure: false, // Use STARTTLS instead of implicit TLS
+    secure: false,
+    requireTLS: true,
     auth: {
         user: process.env.GMAIL_USER,
         pass: process.env.GMAIL_APP_PASSWORD,
