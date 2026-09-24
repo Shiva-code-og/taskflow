@@ -27,7 +27,7 @@ export const createTask = async (req, res) => {
         // Send email notification asynchronously (non-blocking)
         const recipientEmail = assigned_email || req.user.email;
         if (recipientEmail) {
-            sendTaskCreatedEmail(recipientEmail, newTask.title).catch((emailErr) => {
+            sendTaskCreatedEmail(recipientEmail, newTask).catch((emailErr) => {
                 console.error('Failed to send task creation email notification:', emailErr.message);
             });
         }
@@ -50,7 +50,7 @@ export const updateTask = async (req, res) => {
         if (status && status.toLowerCase() === 'completed') {
             const recipientEmail = updatedTask.assigned_email || req.user.email;
             if (recipientEmail) {
-                sendTaskCompletedEmail(recipientEmail, updatedTask.title).catch((emailErr) => {
+                sendTaskCompletedEmail(recipientEmail, updatedTask).catch((emailErr) => {
                     console.error('Failed to send task completion email notification:', emailErr.message);
                 });
             }
