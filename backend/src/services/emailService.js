@@ -19,18 +19,60 @@ export const sendTaskCreatedEmail = async (toEmail, taskData) => {
     const title = typeof taskData === 'string' ? taskData : taskData.title
     const description = typeof taskData === 'string' ? '' : (taskData.description || '')
     const priority = typeof taskData === 'string' ? '' : (taskData.priority || '')
-    const subject = `New Task: ${title}`
+    const subject = `📋 New Task Assigned: ${title}`
+    
     const html = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1F2937;">
-            <h2 style="color: #4F46E5; margin-bottom: 8px;">📋 New Task Assigned</h2>
-            <p style="font-size: 14px; margin-bottom: 16px;">A new task has been created and assigned to you:</p>
-            <div style="background: #F3F4F6; padding: 16px; border-radius: 8px; margin: 16px 0;">
-                <p style="margin: 6px 0;"><strong>Title:</strong> ${title}</p>
-                ${description ? `<p style="margin: 6px 0;"><strong>Description:</strong> ${description}</p>` : ''}
-                ${priority ? `<p style="margin: 6px 0;"><strong>Priority:</strong> <span style="text-transform: capitalize;">${priority}</span></p>` : ''}
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>New Task Assigned</title>
+        </head>
+        <body style="margin: 0; padding: 24px; background-color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1E293B;">
+            <div style="max-width: 580px; margin: 0 auto; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div style="background-color: #FFFFFF; padding: 28px 28px 16px 28px; border-bottom: 2px solid #4F46E5;">
+                    <div style="display: inline-block; padding: 6px 12px; background-color: #EEF2FF; color: #4F46E5; font-size: 12px; font-weight: 700; border-radius: 6px; letter-spacing: 0.5px; text-transform: uppercase;">
+                        TaskFlow • New Assignment
+                    </div>
+                    <h1 style="margin: 16px 0 6px 0; font-size: 22px; font-weight: 700; color: #0F172A;">
+                        ${title}
+                    </h1>
+                    <p style="margin: 0; font-size: 14px; color: #64748B;">
+                        A new task has been assigned to you.
+                    </p>
+                </div>
+
+                <div style="padding: 24px 28px; background-color: #FFFFFF;">
+                    ${description ? `
+                    <div style="margin-bottom: 20px;">
+                        <span style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Description</span>
+                        <p style="margin: 6px 0 0 0; font-size: 15px; line-height: 1.6; color: #334155; white-space: pre-wrap; background-color: #FFFFFF; padding: 12px 14px; border: 1px solid #E2E8F0; border-radius: 8px;">${description}</p>
+                    </div>
+                    ` : ''}
+
+                    <div style="display: flex; gap: 16px; margin-top: 16px; padding-top: 16px; border-top: 1px solid #F1F5F9;">
+                        ${priority ? `
+                        <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; padding: 10px 14px; border-radius: 8px; display: inline-block;">
+                            <span style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase;">Priority: </span>
+                            <span style="font-size: 13px; font-weight: 700; color: #4F46E5; text-transform: capitalize;">${priority}</span>
+                        </div>
+                        ` : ''}
+                        <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; padding: 10px 14px; border-radius: 8px; display: inline-block; margin-left: 8px;">
+                            <span style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase;">Status: </span>
+                            <span style="font-size: 13px; font-weight: 700; color: #F59E0B;">Pending</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="padding: 16px 28px; background-color: #FFFFFF; border-top: 1px solid #F1F5F9; text-align: center;">
+                    <p style="margin: 0; font-size: 12px; color: #94A3B8;">
+                        This is an automated notification from TaskFlow. Please do not reply to this email.
+                    </p>
+                </div>
             </div>
-            <p style="color: #6B7280; font-size: 12px; margin-top: 24px;">— TaskFlow Notifications</p>
-        </div>
+        </body>
+        </html>
     `
 
     try {
@@ -65,16 +107,53 @@ export const sendTaskCompletedEmail = async (toEmail, taskData) => {
     const title = typeof taskData === 'string' ? taskData : taskData.title
     const description = typeof taskData === 'string' ? '' : (taskData.description || '')
     const subject = `✅ Task Completed: ${title}`
+    
     const html = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1F2937;">
-            <h2 style="color: #16A34A; margin-bottom: 8px;">✅ Task Completed</h2>
-            <p style="font-size: 14px; margin-bottom: 16px;">Good news! The following task has been marked as <b>COMPLETED</b>:</p>
-            <div style="background: #F0FDF4; padding: 16px; border-radius: 8px; margin: 16px 0;">
-                <p style="margin: 6px 0;"><strong>Title:</strong> ${title}</p>
-                ${description ? `<p style="margin: 6px 0;"><strong>Description:</strong> ${description}</p>` : ''}
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Task Completed</title>
+        </head>
+        <body style="margin: 0; padding: 24px; background-color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1E293B;">
+            <div style="max-width: 580px; margin: 0 auto; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div style="background-color: #FFFFFF; padding: 28px 28px 16px 28px; border-bottom: 2px solid #10B981;">
+                    <div style="display: inline-block; padding: 6px 12px; background-color: #ECFDF5; color: #059669; font-size: 12px; font-weight: 700; border-radius: 6px; letter-spacing: 0.5px; text-transform: uppercase;">
+                        TaskFlow • Task Completed
+                    </div>
+                    <h1 style="margin: 16px 0 6px 0; font-size: 22px; font-weight: 700; color: #0F172A;">
+                        ${title}
+                    </h1>
+                    <p style="margin: 0; font-size: 14px; color: #64748B;">
+                        This task has been marked as <b>COMPLETED</b>.
+                    </p>
+                </div>
+
+                <div style="padding: 24px 28px; background-color: #FFFFFF;">
+                    ${description ? `
+                    <div style="margin-bottom: 20px;">
+                        <span style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Task Details</span>
+                        <p style="margin: 6px 0 0 0; font-size: 15px; line-height: 1.6; color: #334155; white-space: pre-wrap; background-color: #FFFFFF; padding: 12px 14px; border: 1px solid #E2E8F0; border-radius: 8px;">${description}</p>
+                    </div>
+                    ` : ''}
+
+                    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #F1F5F9;">
+                        <div style="background-color: #FFFFFF; border: 1px solid #A7F3D0; padding: 10px 14px; border-radius: 8px; display: inline-block;">
+                            <span style="font-size: 11px; font-weight: 600; color: #059669; text-transform: uppercase;">Status: </span>
+                            <span style="font-size: 13px; font-weight: 700; color: #059669;">✅ Completed</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="padding: 16px 28px; background-color: #FFFFFF; border-top: 1px solid #F1F5F9; text-align: center;">
+                    <p style="margin: 0; font-size: 12px; color: #94A3B8;">
+                        This is an automated notification from TaskFlow. Please do not reply to this email.
+                    </p>
+                </div>
             </div>
-            <p style="color: #6B7280; font-size: 12px; margin-top: 24px;">— TaskFlow Notifications</p>
-        </div>
+        </body>
+        </html>
     `
 
     try {
