@@ -26,7 +26,11 @@ This repository is organized as a monorepo containing both the frontend and back
    | `SUPABASE_SERVICE_KEY` | Your Supabase service role secret |
    | `SUPABASE_ANON_KEY` | Your Supabase anon public key |
    | `SUPABASE_JWT_SECRET` | Your Supabase JWT secret |
-   | `GMAIL_USER` | *(Optional)* Your Gmail address for task alerts |
+   | `BREVO_API_KEY` | *(Recommended)* Brevo API key (`xkeysib-...`) for cloud email delivery |
+   | `BREVO_SENDER_EMAIL` | *(Recommended)* Sender email registered in Brevo (e.g. `samalashiva81@gmail.com`) |
+   | `BREVO_SENDER_NAME` | *(Optional)* Sender display name (defaults to `TaskFlow`) |
+   | `RESEND_API_KEY` | *(Optional fallback)* Resend API key (only sends to account owner on free tier) |
+   | `GMAIL_USER` | *(Optional)* Your Gmail address for local dev SMTP alerts |
    | `GMAIL_APP_PASSWORD` | *(Optional)* Gmail 16-character App Password |
 5. Click **Deploy Web Service**.
 6. Note down your backend URL (e.g., `https://taskflow-backend-xxxx.onrender.com`).

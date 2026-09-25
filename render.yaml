@@ -18,6 +18,14 @@ services:
         sync: false
       - key: SUPABASE_JWT_SECRET
         sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_SENDER_EMAIL
+        sync: false
+      - key: BREVO_SENDER_NAME
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
       - key: GMAIL_USER
         sync: false
       - key: GMAIL_APP_PASSWORD

@@ -1,18 +1,140 @@
-import { Resend } from 'resend'
-import nodemailer from 'nodemailer'
+// Dynamic Resend loader to prevent runtime failure if Resend is not installed or configured
+let resendClient = null
+const getResendClient = async () => {
+    if (resendClient) return resendClient
+    if (!process.env.RESEND_API_KEY) return null
+    try {
+        const { Resend } = await import('resend')
+        resendClient = new Resend(process.env.RESEND_API_KEY)
+        return resendClient
+    } catch (e) {
+        console.warn('[Email] Resend package not available:', e.message)
+        return null
+    }
+}
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
+// Dynamic Nodemailer loader for local development
+let transporter = null
+const getTransporter = async () => {
+    if (transporter) return transporter
+    if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return null
+    try {
+        const nodemailer = (await import('nodemailer')).default
+        transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.GMAIL_USER,
+                pass: process.env.GMAIL_APP_PASSWORD,
+            },
+        })
+        return transporter
+    } catch (e) {
+        console.warn('[Email] Nodemailer package not available:', e.message)
+        return null
+    }
+}
 
-// Fallback to Nodemailer if RESEND_API_KEY is not set
-const transporter = process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD
-    ? nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.GMAIL_USER,
-            pass: process.env.GMAIL_APP_PASSWORD,
-        },
-    })
-    : null
+/**
+ * Core sendEmail helper.
+ * Priority:
+ * 1. Brevo HTTPS API (BREVO_API_KEY) -> Works on Render (Port 443), sends to ANY email (300/day free)
+ * 2. Resend API (RESEND_API_KEY) -> Falls back to Resend (Note: onboarding@resend.dev only allows sending to account owner)
+ * 3. Nodemailer SMTP -> For local development only (blocked by Render free tier)
+ */
+export const sendEmail = async ({ to, subject, html }) => {
+    if (!to) return
+
+    // 1. Primary: Brevo (Sendinblue) HTTPS API
+    if (process.env.BREVO_API_KEY) {
+        try {
+            const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.GMAIL_USER || 'samalashiva81@gmail.com'
+            const senderName = process.env.BREVO_SENDER_NAME || 'TaskFlow'
+
+            console.log(`[Email] Sending via Brevo API to ${to} from ${senderEmail}...`)
+
+            const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+                method: 'POST',
+                headers: {
+                    'accept': 'application/json',
+                    'api-key': process.env.BREVO_API_KEY,
+                    'content-type': 'application/json',
+                },
+                body: JSON.stringify({
+                    sender: {
+                        name: senderName,
+                        email: senderEmail,
+                    },
+                    to: [
+                        { email: to }
+                    ],
+                    subject,
+                    htmlContent: html,
+                }),
+            })
+
+            const data = await response.json().catch(() => ({}))
+
+            if (!response.ok) {
+                console.error(`[Email Error] Brevo API error (${response.status}):`, JSON.stringify(data))
+                throw new Error(data.message || `Brevo returned status ${response.status}`)
+            }
+
+            console.log(`[Email Success] Email delivered via Brevo to ${to}. MessageId: ${data.messageId || 'ok'}`)
+            return data
+        } catch (error) {
+            console.error('[Email Error] Failed sending via Brevo:', error.message)
+            // If neither Resend nor Nodemailer is configured, return
+            if (!process.env.RESEND_API_KEY && !process.env.GMAIL_USER) return
+        }
+    }
+
+    // 2. Fallback: Resend API
+    if (process.env.RESEND_API_KEY) {
+        try {
+            const resend = await getResendClient()
+            if (resend) {
+                console.log(`[Email] Sending via Resend to ${to}...`)
+                const { data, error } = await resend.emails.send({
+                    from: process.env.RESEND_FROM || 'TaskFlow <onboarding@resend.dev>',
+                    to: [to],
+                    subject,
+                    html,
+                })
+                if (error) {
+                    console.error('[Email Error] Resend error:', error)
+                } else {
+                    console.log(`[Email Success] Email delivered via Resend to ${to}:`, data?.id)
+                }
+                return data
+            }
+        } catch (error) {
+            console.error('[Email Error] Failed sending via Resend:', error.message)
+        }
+    }
+
+    // 3. Fallback: Nodemailer SMTP (Local development)
+    if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+        try {
+            const transport = await getTransporter()
+            if (transport) {
+                console.log(`[Email] Sending via SMTP to ${to}...`)
+                await transport.sendMail({
+                    from: `"TaskFlow" <${process.env.GMAIL_USER}>`,
+                    to,
+                    subject,
+                    html,
+                })
+                console.log(`[Email Success] Email delivered via SMTP to ${to}`)
+            }
+        } catch (error) {
+            console.error('[Email Error] Failed sending via SMTP (Note: Render blocks SMTP ports):', error.message)
+        }
+    }
+
+    if (!process.env.BREVO_API_KEY && !process.env.RESEND_API_KEY && (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD)) {
+        console.warn('[Email Warning] No email service configured. Please set BREVO_API_KEY in environment variables.')
+    }
+}
 
 export const sendTaskCreatedEmail = async (toEmail, taskData) => {
     if (!toEmail) return
@@ -75,31 +197,7 @@ export const sendTaskCreatedEmail = async (toEmail, taskData) => {
         </html>
     `
 
-    try {
-        if (resend) {
-            const { data, error } = await resend.emails.send({
-                from: process.env.RESEND_FROM || 'TaskFlow <onboarding@resend.dev>',
-                to: [toEmail],
-                subject,
-                html,
-            })
-            if (error) {
-                console.error('Resend email error:', error)
-            } else {
-                console.log(`Task creation email sent via Resend to ${toEmail}:`, data?.id)
-            }
-        } else if (transporter) {
-            await transporter.sendMail({
-                from: `"TaskFlow" <${process.env.GMAIL_USER}>`,
-                to: toEmail,
-                subject,
-                html,
-            })
-            console.log(`Task creation email sent via SMTP to ${toEmail}`)
-        }
-    } catch (error) {
-        console.error('Error sending task creation email:', error)
-    }
+    return sendEmail({ to: toEmail, subject, html })
 }
 
 export const sendTaskCompletedEmail = async (toEmail, taskData) => {
@@ -156,29 +254,5 @@ export const sendTaskCompletedEmail = async (toEmail, taskData) => {
         </html>
     `
 
-    try {
-        if (resend) {
-            const { data, error } = await resend.emails.send({
-                from: process.env.RESEND_FROM || 'TaskFlow <onboarding@resend.dev>',
-                to: [toEmail],
-                subject,
-                html,
-            })
-            if (error) {
-                console.error('Resend completion email error:', error)
-            } else {
-                console.log(`Task completion email sent via Resend to ${toEmail}:`, data?.id)
-            }
-        } else if (transporter) {
-            await transporter.sendMail({
-                from: `"TaskFlow" <${process.env.GMAIL_USER}>`,
-                to: toEmail,
-                subject,
-                html,
-            })
-            console.log(`Task completion email sent via SMTP to ${toEmail}`)
-        }
-    } catch (error) {
-        console.error('Error sending task completion email:', error)
-    }
+    return sendEmail({ to: toEmail, subject, html })
 }
